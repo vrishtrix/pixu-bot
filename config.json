@@ -2,8 +2,8 @@
 	"api": {
 		"baseUrl": "https://pixu.life/api"
 	},
-	"features": ["userinfo", "config"],
-	"userinfo": {
+	"features": ["read:user", "read:config", "update:config"],
+	"read:user": {
 		"endpoint": "/user/{username}",
 		"methods": ["GET"],
 		"headers": {

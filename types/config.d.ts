@@ -1,16 +1,18 @@
 declare global {
 	enum Feature {
-		UserInfo = 'userinfo',
-		Config = 'config',
+		ReadUser = 'read:user',
+		ReadConfig = 'read:config',
+		UpdateConfig = 'update:config',
 	}
 
 	interface FeatureConfigMap {
-		[Feature.UserInfo]?: {
+		[Feature.ReadUser]?: {
 			endpoint: string;
 			methods: HTTPMethod[];
-			headers: Record<string, string>;
+			headers?: Record<string, string>;
 		};
-		[Feature.Config]?: Record<string, unknown>;
+		[Feature.ReadConfig]?: Record<string, unknown>;
+		[Feature.UpdateConfig]?: Record<string, unknown>;
 	}
 
 	interface Config extends FeatureConfigMap {
