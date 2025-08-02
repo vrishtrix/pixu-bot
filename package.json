@@ -13,6 +13,6 @@
 		"discord.js": "^14.21.0"
 	},
 	"scripts": {
-		"start": "bun index.ts"
+		"start": "bun src/index.ts"
 	}
 }

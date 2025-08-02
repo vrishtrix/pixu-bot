@@ -1,0 +1,13 @@
+{
+	"api": {
+		"baseUrl": "https://pixu.life/api"
+	},
+	"features": ["userinfo", "config"],
+	"userinfo": {
+		"endpoint": "/user/{username}",
+		"methods": ["GET"],
+		"headers": {
+			"User-Agent": "PIXU-Bot/1.0"
+		}
+	}
+}
