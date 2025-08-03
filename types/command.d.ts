@@ -1,5 +1,5 @@
 import type { ChatInputCommandInteraction, PermissionFlags } from 'discord.js';
-import type { ConfigManager } from '@/configManager';
+import type { ConfigManager } from '@/ConfigManager';
 
 declare global {
 	interface CommandMetadata {
