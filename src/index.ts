@@ -1,12 +1,36 @@
 import type { DiscordjsError } from 'discord.js';
 import { Client, DiscordjsErrorCodes as ErrorCodes, Events, GatewayIntentBits } from 'discord.js';
+import { CommandManager } from '@/CommandManager';
+import { ConfigManager } from '@/ConfigManager';
+
+// Commands
+import { PingCommand } from '@/commands/ping.command';
 
 const client = new Client({
-	intents: [GatewayIntentBits.Guilds],
+	intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages],
 });
 
-client.once(Events.ClientReady, (readyClient) => {
+const configManager = new ConfigManager('config.json');
+const commandManager = new CommandManager(configManager);
+
+commandManager.registerCommand(PingCommand);
+
+client.once(Events.ClientReady, async (readyClient) => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+
+	try {
+		await commandManager.registerSlashCommands(client, process.env.GUILD_ID);
+	} catch (error) {
+		console.error('Failed to register slash commands:', error);
+	}
+});
+
+client.on('interactionCreate', async (interaction) => {
+	if (interaction.isChatInputCommand()) {
+		await commandManager.executeCommand(interaction.commandName, interaction);
+	} else if (interaction.isAutocomplete()) {
+		await commandManager.handleAutocomplete(interaction);
+	}
 });
 
 client.login(process.env.BOT_TOKEN).catch((err: DiscordjsError) => {
