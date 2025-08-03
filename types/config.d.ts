@@ -1,9 +1,7 @@
+import type { Feature as FeatureEnum } from '@/lib/feature';
+
 declare global {
-	enum Feature {
-		ReadUser = 'read:user',
-		ReadConfig = 'read:config',
-		UpdateConfig = 'update:config',
-	}
+	type Feature = FeatureEnum;
 
 	interface FeatureConfigMap {
 		[Feature.ReadUser]?: {
@@ -22,5 +20,3 @@ declare global {
 		features: Feature[];
 	}
 }
-
-export {};

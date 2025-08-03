@@ -9,7 +9,12 @@ export class ConfigManager {
 	private config: Config | null = null;
 
 	constructor(private filePath: string | URL) {
-		this.config = Bun.file(this.filePath, { type: 'application/json' }) as unknown as Config;
+		this.loadConfig();
+	}
+
+	private async loadConfig() {
+		const configFile = await Bun.file(this.filePath, { type: 'application/json' }).text();
+		this.config = JSON.parse(configFile) as Config;
 	}
 
 	getConfig(): Config {
@@ -17,7 +22,7 @@ export class ConfigManager {
 		return this.config;
 	}
 
-	getFeatureConfig(feature: Feature): Config[Feature] | undefined {
+	getFeatureConfig<F extends keyof FeatureConfigMap>(feature: F): Config[F] | undefined {
 		return this.getConfig()[feature];
 	}
 
@@ -49,7 +54,7 @@ export class ConfigManager {
 		return true;
 	}
 
-	async updateFeatureConfig<F extends Feature>(feature: F, data: Partial<Config[F]>): Promise<boolean> {
+	async updateFeatureConfig<F extends keyof FeatureConfigMap>(feature: F, data: Partial<Config[F]>): Promise<boolean> {
 		const config = this.getConfig();
 
 		// Initialize config for the particular feature if it doesn't already exist.
