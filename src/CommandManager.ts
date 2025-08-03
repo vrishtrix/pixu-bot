@@ -1,7 +1,18 @@
-import { type ChatInputCommandInteraction, Collection, type GuildMember } from 'discord.js';
+import {
+	type APIApplicationCommand,
+	type AutocompleteInteraction,
+	type ChatInputCommandInteraction,
+	type Client,
+	Collection,
+	type GuildMember,
+	REST,
+	Routes,
+	type SlashCommandBuilder,
+} from 'discord.js';
 import type { ConfigManager } from '@/ConfigManager';
 import type { BaseCommand } from '@/commands/BaseCommand';
 import { getCommandMetadata } from '@/lib/decorators';
+import { SlashCommandBuilderHelper } from '@/lib/discord/SlashCommandBuilder';
 
 export class CommandManager {
 	private commands = new Collection() as CommandCollection;
@@ -31,6 +42,10 @@ export class CommandManager {
 
 	registerCommands(CommandClasses: (new () => BaseCommand)[]): void {
 		CommandClasses.forEach((CommandClass) => this.registerCommand(CommandClass));
+	}
+
+	getSlashCommandData(): SlashCommandBuilder[] {
+		return Array.from(this.commands.values()).map(({ metadata }) => SlashCommandBuilderHelper.buildSlashCommand(metadata));
 	}
 
 	private async checkPermissions(
@@ -79,6 +94,49 @@ export class CommandManager {
 		return { success: true, reason: '' };
 	}
 
+	async registerSlashCommands(client: Client, guildId?: string): Promise<void> {
+		if (!client.user) {
+			throw new Error('Client must be logged in before registering slash commands');
+		}
+
+		// biome-ignore lint/style/noNonNullAssertion: This is only called after the 'ready' event is triggered.
+		const rest = new REST().setToken(client.token!);
+		const slashCommands = this.getSlashCommandData();
+
+		try {
+			console.log(`Started refreshing ${slashCommands.length} application (/) commands.`);
+
+			let data: APIApplicationCommand[];
+			if (guildId) {
+				data = (await rest.put(Routes.applicationGuildCommands(client.user.id, guildId), {
+					body: slashCommands.map((cmd) => cmd.toJSON()),
+				})) as APIApplicationCommand[];
+			} else {
+				data = (await rest.put(Routes.applicationCommands(client.user.id), {
+					body: slashCommands.map((cmd) => cmd.toJSON()),
+				})) as APIApplicationCommand[];
+			}
+
+			console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+		} catch (error) {
+			console.error('Error registering slash commands:', error);
+			throw error;
+		}
+	}
+
+	async handleAutocomplete(interaction: AutocompleteInteraction): Promise<void> {
+		const command = this.commands.get(interaction.commandName);
+		if (!command?.instance.handleAutocomplete) {
+			return;
+		}
+
+		try {
+			await command.instance.handleAutocomplete(interaction);
+		} catch (error) {
+			console.error(`Error handling autocomplete for ${interaction.commandName}:`, error);
+		}
+	}
+
 	async executeCommand(commandName: string, interaction: ChatInputCommandInteraction): Promise<void> {
 		const command = this.commands.get(commandName);
 		if (!command) {
@@ -89,7 +147,8 @@ export class CommandManager {
 			return;
 		}
 
-		if (!interaction.member) {
+		const member = interaction.member as GuildMember;
+		if (!member && !command.metadata.dmPermission) {
 			await interaction.reply({
 				content: '❌ This command can only be used in a server.',
 				ephemeral: true,
@@ -103,10 +162,12 @@ export class CommandManager {
 		};
 
 		try {
-			const permissionCheck = await this.checkPermissions(command.metadata, interaction.member as GuildMember);
-			if (!permissionCheck.success) {
-				await command.instance.onValidationFailure(context, permissionCheck.reason);
-				return;
+			if (member) {
+				const permissionCheck = await this.checkPermissions(command.metadata, member);
+				if (!permissionCheck.success) {
+					await command.instance.onValidationFailure(context, permissionCheck.reason);
+					return;
+				}
 			}
 
 			const featureCheck = await this.checkFeatures(command.metadata);

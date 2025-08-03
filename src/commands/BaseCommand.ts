@@ -1,3 +1,5 @@
+import type { BaseInteraction } from 'discord.js';
+
 export abstract class BaseCommand {
 	abstract execute(context: CommandContext): Promise<void>;
 
@@ -11,4 +13,6 @@ export abstract class BaseCommand {
 			ephemeral: true,
 		});
 	}
+
+	async handleAutocomplete?(interaction: BaseInteraction): Promise<void>;
 }
