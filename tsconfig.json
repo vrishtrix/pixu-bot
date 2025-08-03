@@ -26,7 +26,8 @@
     // Custom types
     "typeRoots": [
       "./types",
-      "./node_modules/@types"
+      "./node_modules/@types",
+      "reflect-metadata"
     ],
     // For easier imports
     "baseUrl": ".",
@@ -34,6 +35,9 @@
       "@/*": [
         "src/*"
       ]
-    }
+    },
+    // Misc
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
 }
