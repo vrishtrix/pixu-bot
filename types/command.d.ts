@@ -1,11 +1,12 @@
-import type { ChatInputCommandInteraction, PermissionFlags } from 'discord.js';
+import type { ChatInputCommandInteraction, Collection, PermissionFlagsBits } from 'discord.js';
 import type { ConfigManager } from '@/ConfigManager';
+import type { BaseCommand } from '@/commands/BaseCommand';
 
 declare global {
 	interface CommandMetadata {
 		name: string;
 		description: string;
-		requiredPermissions?: PermissionFlags[];
+		requiredPermissions?: PermissionFlagsBits[];
 		requiredFeatures?: Feature[];
 	}
 
@@ -13,4 +14,11 @@ declare global {
 		interaction: ChatInputCommandInteraction;
 		configManager: ConfigManager;
 	}
+
+	interface Command {
+		instance: BaseCommand;
+		metadata: CommandMetadata;
+	}
+
+	type CommandCollection = Collection<string, Command>;
 }
