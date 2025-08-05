@@ -237,8 +237,8 @@ export class CommandManager {
 			}
 
 			await command.instance.execute(context);
-		} catch (err) {
-			console.error(`Error executing command ${commandName}:`, err);
+		} catch (error) {
+			console.error(`Error executing command ${commandName}:`, error);
 
 			if (!interaction.replied && !interaction.deferred) {
 				await interaction.reply({

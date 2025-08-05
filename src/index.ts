@@ -28,8 +28,8 @@ client.on('interactionCreate', async (interaction) => {
 	}
 });
 
-client.login(process.env.BOT_TOKEN).catch((err: DiscordjsError) => {
-	switch (err.code) {
+client.login(process.env.BOT_TOKEN).catch((error: DiscordjsError) => {
+	switch (error.code) {
 		case ErrorCodes.TokenMissing:
 			console.error('A bot token was not provided for log in. Please make sure that the BOT_TOKEN environment variable is set.');
 			break;
@@ -38,7 +38,7 @@ client.login(process.env.BOT_TOKEN).catch((err: DiscordjsError) => {
 			break;
 		default:
 			console.error('An unknown error occurred while logging in. Please report this to the developers!');
-			console.error(err.stack);
+			console.error(error.stack);
 			break;
 	}
 
