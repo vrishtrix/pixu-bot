@@ -3,17 +3,12 @@ import { Client, DiscordjsErrorCodes as ErrorCodes, Events, GatewayIntentBits } 
 import { CommandManager } from '@/CommandManager';
 import { ConfigManager } from '@/ConfigManager';
 
-// Commands
-import { PingCommand } from '@/commands/ping.command';
-
 const client = new Client({
 	intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages],
 });
 
 const configManager = new ConfigManager('config.json');
-const commandManager = new CommandManager(configManager);
-
-commandManager.registerCommand(PingCommand);
+const commandManager = new CommandManager(configManager, true);
 
 client.once(Events.ClientReady, async (readyClient) => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);

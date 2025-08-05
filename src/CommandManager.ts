@@ -1,3 +1,4 @@
+import { Glob } from 'bun';
 import {
 	type APIApplicationCommand,
 	type AutocompleteInteraction,
@@ -17,7 +18,60 @@ import { SlashCommandBuilderHelper } from '@/lib/discord/SlashCommandBuilder';
 export class CommandManager {
 	private commands = new Collection() as CommandCollection;
 
-	constructor(private configManager: ConfigManager) {}
+	constructor(
+		private configManager: ConfigManager,
+		private autoLoadCommands: boolean,
+	) {
+		if (this.autoLoadCommands) this.loadCommands();
+	}
+
+	private async loadCommands(): Promise<void> {
+		try {
+			const commandsDir = `${import.meta.dir}/commands`;
+			const commandsList = new Glob('**/*.command.{ts,js}').scan(commandsDir);
+
+			console.log(`Scanning for commands in: ${commandsDir}`);
+
+			let commandsCount = 0;
+			for await (const file of commandsList) {
+				await this.loadCommandFile(commandsDir, file);
+				commandsCount++;
+			}
+
+			console.log(`Found ${commandsCount} command files, successfully loaded ${this.commands.size} commands`);
+		} catch (error) {
+			console.error('Error loading commands:', error);
+		}
+	}
+
+	private async loadCommandFile(baseDir: string, relativePath: string): Promise<void> {
+		try {
+			const absolutePath = `${baseDir}/${relativePath}`;
+
+			console.log(`Loading command file: ${relativePath}`);
+
+			const commandModule = await import(absolutePath);
+
+			const exports = Object.values(commandModule);
+			let commandsFound = 0;
+
+			for (const exportedItem of exports) {
+				try {
+					this.registerCommand(exportedItem as new () => BaseCommand);
+					commandsFound++;
+					console.log(`✓ Loaded command from: ${relativePath}`);
+				} catch (error) {
+					console.error(`✗ Failed to register command from ${relativePath}:`, error);
+				}
+			}
+
+			if (commandsFound === 0) {
+				console.warn(`⚠ No valid commands found in: ${relativePath}`);
+			}
+		} catch (error) {
+			console.error(`✗ Failed to load command file ${relativePath}:`, error);
+		}
+	}
 
 	getCommand(name: string): Command | undefined {
 		return this.commands.get(name);
